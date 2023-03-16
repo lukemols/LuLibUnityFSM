@@ -1,0 +1,21 @@
+{
+    "name": "com.lucamollo.lulibunity.fsm",
+    "version": "1.0.0",
+    "displayName": "Lu Lib Unity FSM",
+    "description": "This package contains a simple FSM used for a RPG project",
+    "unity": "2021.3",
+    "unityRelease": "12f1",
+    "documentationUrl": "https://example.com/",
+    "changelogUrl": "https://example.com/changelog.html",
+    "licensesUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "dependencies": {
+   },
+   "keywords": [
+      "fsm",
+      "rpg"
+    ],
+    "author": {
+      "name": "Luca Mollo",
+      "url": "https://github.com/lukemols"
+    }
+  }
