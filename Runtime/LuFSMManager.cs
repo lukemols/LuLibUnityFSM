@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class LuFSMManager : MonoBehaviour
@@ -12,6 +9,11 @@ public class LuFSMManager : MonoBehaviour
     private void Awake()
     {
         currentFSM = startingFSM;
+        if (currentFSM == null || !currentFSM.IsValidFSM())
+        {
+            enabled = false;
+            Debug.LogError("LuFSMManager.Awake: Invalid FSM");
+        }
     }
 
     private void Start()
@@ -26,7 +28,7 @@ public class LuFSMManager : MonoBehaviour
 
     public void OpenFSM(LuFSM newFSM, string entryPoint = null)
     {
-        if (newFSM != null)
+        if (newFSM != null && newFSM.IsValidFSM())
         {
             if (currentFSM != null)
             {
@@ -42,7 +44,9 @@ public class LuFSMManager : MonoBehaviour
     {
         if (currentFSM != null)
         {
-            currentFSM.StartFSM(entryPoint ?? LuFSM.FSM_DEFAULT_ENTRY_POINT);
+            var entry = entryPoint ?? LuFSM.FSM_DEFAULT_ENTRY_POINT;
+            Debug.Log($"LuFSMManager.StartFSM: Starting FSM {currentFSM.name} with entry point: {entry}");
+            currentFSM.StartFSM(entry, this);
         }
     }
     
@@ -51,6 +55,14 @@ public class LuFSMManager : MonoBehaviour
         if (currentFSM != null)
         {
             currentFSM.UpdateFSM();
+        }
+    }
+
+    public void FireAction(string action, string parameter)
+    {
+        if (currentFSM != null)
+        {
+            currentFSM.HandleAction(action, parameter);
         }
     }
 }

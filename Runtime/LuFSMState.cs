@@ -1,29 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Lu Lib FSM/Create new FSM State")]
 public class LuFSMState : ScriptableObject
 {
     public string StateName { get; private set; }
-    
-    public void EnterState(string givenName, string transitionMessage = null)
+    protected LuFSM owningFSM;
+
+    public LuFSM OwningFSM => owningFSM;
+
+    public void SetupState(LuFSM owningFSM, string givenName = null)
     {
-        StateName = givenName;
-        OnEnterState(transitionMessage);
+        this.owningFSM = owningFSM;
+        StateName = givenName ?? StateName;
     }
     
-    public void UpdateState()
-    {
-        OnUpdateState();
-    }
+    public virtual void EnterState(string transitionMessage = null) { }
     
-    public void ExitState()
-    {
-        OnExitState();
-    }
+    public virtual void UpdateState() { }
     
-    protected virtual void OnEnterState(string transitionMessage = null) { }
-    protected virtual void OnUpdateState() { }
-    protected virtual void OnExitState() { }
+    public virtual void ExitState() { }
+    
+    public virtual void HandleAction(string action, string parameter) { }
 }

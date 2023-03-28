@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,19 +7,24 @@ public class LuFSM : ScriptableObject
     public static readonly string FSM_DEFAULT_ENTRY_POINT = "default";
     private LuFSMState currentState;
     private List<LuFSMTransition> pendingTransitions = new List<LuFSMTransition>();
+    private Object owner;
+
+    public Object Owner => owner;
 
     [SerializeField] public List<LuFSMRelation> relations;
     [SerializeField] public List<LuFSMStateTransition> entryPoints = new(){new LuFSMStateTransition(FSM_DEFAULT_ENTRY_POINT)};
 
-    public bool IsValidFSM()
-    {
-        return relations is { Count: > 0 };
-    }
+    #region FSM flow
     
-    public void StartFSM(string entryLabel)
+    public void StartFSM(string entryLabel, Object fsmOwner)
     {
-        currentState = GetEntryState(entryLabel);
+        owner = fsmOwner;
+        
+        currentState = GetEntryState(entryLabel, out string stateName);
+        currentState.SetupState(this, stateName);
         currentState.EnterState(entryLabel);
+        
+        Debug.Log($"LuFSM.StartFSM: FSM {name} - Entering in state {currentState.StateName}.");
     }
 
     public void UpdateFSM()
@@ -46,8 +50,14 @@ public class LuFSM : ScriptableObject
             {
                 LuFSMState nextState = GetStateFromName(stateTransition.ToStateName);
                 currentState.ExitState();
-                nextState.EnterState(stateTransition.ToStateName, message);
+                nextState.SetupState(this, stateTransition.ToStateName);
+                nextState.EnterState(message);
                 currentState = nextState;
+                Debug.Log($"LuFSM.UpdateFSM: FSM {name} - Entering in state {currentState.StateName}.");
+            }
+            else
+            {
+                Debug.LogError($"LuFSM.UpdateFSM: FSM {name} - There are {pendingTransitions.Count} transitions but no one triggered.");
             }
             
             pendingTransitions.Clear();
@@ -60,13 +70,41 @@ public class LuFSM : ScriptableObject
 
     public void ExitFSM()
     {
+        Debug.Log($"LuFSM.ExitFSM: FSM {name} - Exiting from state {currentState.StateName}.");
         currentState.ExitState();
     }
 
-    private LuFSMState GetEntryState(string entryLabel)
+    public void HandleAction(string action, string parameter)
+    {
+        Debug.Log($"LuFSM.HandleAction: FSM {name} - Triggering action {action} with parameter {parameter} in state {currentState.StateName}.");
+        currentState.HandleAction(action, parameter);
+    }
+
+    public void TriggerTransition(string label, string message = null, int priority = 0)
+    {
+        pendingTransitions.Add(new LuFSMTransition(label, message, priority));
+    }
+
+    #endregion
+
+    #region FSM utilities
+    
+    public bool IsValidFSM()
+    {
+        return relations is { Count: > 0 };
+    }
+    
+    private LuFSMState GetEntryState(string entryLabel, out string stateName)
     {
         LuFSMStateTransition entryPoint = entryPoints?.Find(e => e.TransitionName == entryLabel);
-        return entryPoint != null ? GetStateFromName(entryPoint.ToStateName) : relations[0].State;
+        if (entryPoint != null)
+        {
+            stateName = entryPoint.ToStateName;
+            return GetStateFromName(entryPoint.ToStateName);
+        }
+
+        stateName = relations[0].StateName;
+        return relations[0].State;
     }
 
     private LuFSMState GetStateFromName(string stateName)
@@ -84,4 +122,6 @@ public class LuFSM : ScriptableObject
     {
         return GetStateRelation(currentState.StateName);
     }
+    
+    #endregion
 }
